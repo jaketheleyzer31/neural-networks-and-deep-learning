@@ -1,3 +1,4 @@
+
 """expand_mnist.py
 ~~~~~~~~~~~~~~~~~~
 
@@ -16,7 +17,7 @@ from __future__ import print_function
 #### Libraries
 
 # Standard library
-import cPickle
+import pickle
 import gzip
 import os.path
 import random
@@ -30,7 +31,9 @@ if os.path.exists("../data/mnist_expanded.pkl.gz"):
     print("The expanded training set already exists.  Exiting.")
 else:
     f = gzip.open("../data/mnist.pkl.gz", 'rb')
-    training_data, validation_data, test_data = cPickle.load(f)
+    u = pickle._Unpickler(f)
+    u.encoding = 'latin1'
+    training_data, validation_data, test_data = u.load()
     f.close()
     expanded_training_pairs = []
     j = 0 # counter
@@ -42,19 +45,19 @@ else:
         # iterate over data telling us the details of how to
         # do the displacement
         for d, axis, index_position, index in [
-                (1,  0, "first", 0),
-                (-1, 0, "first", 27),
-                (1,  1, "last",  0),
-                (-1, 1, "last",  27)]:
+            (1,  0, "first", 0),
+            (-1, 0, "first", 27),
+            (1,  1, "last",  0),
+            (-1, 1, "last",  27)]:
             new_img = np.roll(image, d, axis)
-            if index_position == "first": 
+            if index_position == "first":
                 new_img[index, :] = np.zeros(28)
-            else: 
+            else:
                 new_img[:, index] = np.zeros(28)
             expanded_training_pairs.append((np.reshape(new_img, 784), y))
     random.shuffle(expanded_training_pairs)
     expanded_training_data = [list(d) for d in zip(*expanded_training_pairs)]
     print("Saving expanded data. This may take a few minutes.")
     f = gzip.open("../data/mnist_expanded.pkl.gz", "w")
-    cPickle.dump((expanded_training_data, validation_data, test_data), f)
+    pickle.dump((expanded_training_data, validation_data, test_data), f)
     f.close()
